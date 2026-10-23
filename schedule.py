@@ -16,7 +16,10 @@ def load_config():
     day_start = config.get("DAY_START")
 
     if type(day_start) is not int or not 0 <= day_start <= 23:
-        raise ValueError("DAY_START должен быть целым числом от 0 до 23")
+        raise ValueError(
+            f"Некорректный DAY_START: {day_start!r}. "
+            "Ожидается целое число от 0 до 23."
+        )
 
     return config
 
