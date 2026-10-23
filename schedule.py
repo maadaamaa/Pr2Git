@@ -17,6 +17,18 @@ def save_schedule(lessons):
         json.dump(lessons, file, ensure_ascii=False, indent=2)
 
 
+def add_lesson(lessons, day, time, subject, room):
+    lesson = {
+        "day": day,
+        "time": time,
+        "subject": subject,
+        "room": room
+    }
+    lessons.append(lesson)
+    save_schedule(lessons)
+    print("Занятие добавлено.")
+
+
 def main():
     lessons = load_schedule()
     print(f"Занятий в расписании: {len(lessons)}")
