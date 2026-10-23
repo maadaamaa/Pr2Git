@@ -40,6 +40,26 @@ def add_lesson(lessons, day, time, subject, room):
     return True
 
 
+def show_day(lessons, day):
+    day_lessons = [
+        lesson for lesson in lessons
+        if lesson["day"].lower() == day.lower()
+    ]
+
+    day_lessons.sort(key=lambda lesson: lesson["time"])
+
+    if not day_lessons:
+        print(f"На день «{day}» занятий нет.")
+        return
+
+    print(f"Расписание на день: {day}")
+    for lesson in day_lessons:
+        print(
+            f'{lesson["time"]} | {lesson["subject"]} '
+            f'| аудитория {lesson["room"]}'
+        )
+
+
 def main():
     lessons = load_schedule()
     print(f"Занятий в расписании: {len(lessons)}")
