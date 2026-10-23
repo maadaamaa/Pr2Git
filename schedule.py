@@ -4,6 +4,21 @@ from pathlib import Path
 
 DATA_FILE = Path("schedule.json")
 
+CONFIG_FILE = Path("config.json")
+
+def load_config():
+    if CONFIG_FILE.exists():
+        with CONFIG_FILE.open("r", encoding="utf-8") as file:
+            config = json.load(file)
+    else:
+        config = {"DAY_START": 8}
+
+    day_start = config.get("DAY_START")
+
+    if type(day_start) is not int or not 0 <= day_start <= 23:
+        raise ValueError("DAY_START должен быть целым числом от 0 до 23")
+
+    return config
 
 def load_schedule():
     if not DATA_FILE.exists():
