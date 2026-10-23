@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .venv/
 schedule.json
+
+config.json
