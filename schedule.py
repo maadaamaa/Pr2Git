@@ -60,6 +60,13 @@ def show_day(lessons, day):
         )
 
 
+def filter_by_room(lessons, room):
+    return [
+        lesson for lesson in lessons
+        if lesson["room"].strip().lower() == room.strip().lower()
+    ]
+
+
 def main():
     lessons = load_schedule()
     print(f"Занятий в расписании: {len(lessons)}")
