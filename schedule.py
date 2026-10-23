@@ -17,7 +17,17 @@ def save_schedule(lessons):
         json.dump(lessons, file, ensure_ascii=False, indent=2)
 
 
+
 def add_lesson(lessons, day, time, subject, room):
+    for lesson in lessons:
+        if (
+            lesson["day"] == day
+            and lesson["time"] == time
+            and lesson["room"] == room
+        ):
+            print("Ошибка: аудитория уже занята в это время.")
+            return False
+
     lesson = {
         "day": day,
         "time": time,
@@ -27,6 +37,7 @@ def add_lesson(lessons, day, time, subject, room):
     lessons.append(lesson)
     save_schedule(lessons)
     print("Занятие добавлено.")
+    return True
 
 
 def main():
