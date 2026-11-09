@@ -1,0 +1,91 @@
+name: CI Variant 10
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.10'
+      - name: Check line length <= 120
+        run: |
+          python - <<'EOF'
+          import pathlib, sys
+          bad = []
+          for p in pathlib.Path('.').rglob('*.py'):
+              for i, line in enumerate(p.read_text(encoding='utf-8').splitlines(), 1):
+                  if len(line) > 120:
+                      bad.append(f"{p}:{i}:{len(line)}")
+          if bad:
+              print("Слишком длинные строки:")
+              print("\n".join(bad))
+              sys.exit(1)
+          print("OK: все строки <= 120")
+          EOF
+
+  unit_tests:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.10'
+      - name: Run unittest
+        run: python -m unittest discover -s tests -v
+
+  package:
+    needs: unit_tests
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build dist
+        run: |
+          mkdir -p dist
+          cp schedule.py README.md Dockerfile schedule.json.example dist/
+          {
+            echo "CI_COMMIT_SHA=${{ github.sha }}"
+            echo "CI_PIPELINE_ID=${{ github.run_id }}"
+            echo "FILES:"
+            ls -1 dist
+          } > dist/manifest.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-variant10
+          path: dist/
+          retention-days: 7
+
+  deploy_test:
+    needs: package
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: test-schedule
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-variant10
+          path: deploy/test
+      - name: Smoke test — schedule output
+        run: |
+          cd deploy/test
+          python schedule.py --day monday > ../../deployment.txt
+          cd ../..
+          if [ ! -s deployment.txt ]; then
+            echo "Пустой вывод — дымовой тест не пройден"
+            exit 1
+          fi
+          echo "Smoke test OK"
+      - name: Upload deployment report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment.txt
