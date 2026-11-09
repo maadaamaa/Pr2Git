@@ -1,5 +1,6 @@
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 DATA_FILE = Path("schedule.json")
@@ -34,28 +35,57 @@ def save_schedule(lessons):
     with DATA_FILE.open("w", encoding="utf-8") as file:
         json.dump(lessons, file, ensure_ascii=False, indent=2)
 
+def has_overlap(start1, end1, start2, end2):
+    start1 = datetime.strptime(start1, "%H:%M")
+    end1 = datetime.strptime(end1, "%H:%M")
+    start2 = datetime.strptime(start2, "%H:%M")
+    end2 = datetime.strptime(end2, "%H:%M")
+
+    return start1 < end2 and start2 < end1
 
 
-def add_lesson(lessons, day, time, subject, room):
+def add_lesson(lessons, day, start, end, subject, room):
+    try:
+        start_time = datetime.strptime(start, "%H:%M")
+        end_time = datetime.strptime(end, "%H:%M")
+    except ValueError:
+        print("Ошибка: время должно быть в формате ЧЧ:ММ.")
+        return False
+
+    if start_time >= end_time:
+        print("Ошибка: время окончания должно быть позже начала.")
+        return False
+
     for lesson in lessons:
-        if (
-            lesson["day"] == day
-            and lesson["time"] == time
-            and lesson["room"] == room
+        if lesson["day"].lower() != day.lower():
+            continue
+
+        if has_overlap(
+            start,
+            end,
+            lesson["start"],
+            lesson["end"]
         ):
-            print("Ошибка: аудитория уже занята в это время.")
+            print("Ошибка: время занятия пересекается с другим занятием.")
             return False
+
+        # if lesson["room"].strip().lower() == room.strip().lower():
+        #     print("Ошибка: аудитория уже занята.")
+        #     return False
 
     lesson = {
         "day": day,
-        "time": time,
+        "start": start,
+        "end": end,
         "subject": subject,
         "room": room
     }
+
     lessons.append(lesson)
     save_schedule(lessons)
     print("Занятие добавлено.")
     return True
+
 
 
 def show_day(lessons, day):
@@ -64,8 +94,7 @@ def show_day(lessons, day):
         if lesson["day"].lower() == day.lower()
     ]
 
-    day_lessons.sort(key=lambda lesson: lesson["time"])
-
+    day_lessons.sort(key=lambda lesson: lesson["start"])    
     if not day_lessons:
         print(f"На день «{day}» занятий нет.")
         return
@@ -73,7 +102,7 @@ def show_day(lessons, day):
     print(f"Расписание на день: {day}")
     for lesson in day_lessons:
         print(
-            f'{lesson["time"]} | {lesson["subject"]} '
+            f'{lesson["start"]}-{lesson["end"]} | {lesson["subject"]} '
             f'| аудитория {lesson["room"]}'
         )
 
